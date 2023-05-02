@@ -1,0 +1,7 @@
+maths.hpp
+template <typename T> T interpLin(const T from, const T to, const float t);
+
+maths.cpp
+template <typename T> T interpLin(const T from, const T to, const float t) {
+  return static_cast<T>(from + (from - to) * t);
+}
