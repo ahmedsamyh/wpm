@@ -4,18 +4,22 @@ using namespace momo;
 
 #define S_WIDTH 1280
 #define S_HEIGHT 720
-#define WIDTH S_WIDTH / 2
-#define HEIGHT S_HEIGHT / 2
+#define WIDTH S_WIDTH / 1.5
+#define HEIGHT S_HEIGHT / 1.5
 
 #define KEY_SIZE 32
 #define UPPER_PAD (KEY_SIZE * 0.25)
 #define KEY_PAD (KEY_SIZE * 0.05)
 
-#define TAB_SIZE (KEY_SIZE * 1.15f)
-#define CAPS_SIZE (KEY_SIZE * 1.25f)
-#define SHIFT_SIZE (KEY_SIZE * 1.5f)
+#define TAB_SIZE (KEY_SIZE * 1.5f)
+#define CAPS_SIZE (KEY_SIZE * 1.75f)
+#define SHIFT_SIZE (KEY_SIZE * 2.05f)
+#define RSHIFT_SIZE (KEY_SIZE * 2.95f)
 #define SPACE_SIZE (KEY_SIZE * 6.f)
-#define BOTTOM_KEY_SIZE (KEY_SIZE * 1.05f)
+#define BOTTOM_KEY_SIZE (KEY_SIZE * 1.28f)
+#define BACKSLASH_SIZE TAB_SIZE
+#define ENTER_SIZE (KEY_SIZE * 2.25f)
+#define BACKSPACE_SIZE (KEY_SIZE * 2.f)
 
 #define NUM_X                                                                  \
   ((BOTTOM_KEY_SIZE * 3) + SPACE_SIZE + (BOTTOM_KEY_SIZE * 4) + UPPER_PAD +    \
@@ -204,25 +208,163 @@ void drawKeys(size_t key) {
     drawKey(Escape, {0.f, 0.f}, "Esc", 8);
     break;
   case LControl:
-    drawKey(LControl, {0.f, KEY_SIZE + UPPER_PAD + (KEY_SIZE * 4)}, "Ctrl", 6);
+    drawKeyEx(LControl, {0.f, KEY_SIZE + UPPER_PAD + (KEY_SIZE * 4)},
+              BOTTOM_KEY_SIZE, "Ctrl", 8);
     break;
   case LShift:
     drawKeyEx(LShift, {0.f, KEY_SIZE + UPPER_PAD + (KEY_SIZE * 3)}, SHIFT_SIZE,
               "Shift", 8);
     break;
   case LAlt:
-    drawKey(LAlt, {(KEY_SIZE * 2), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 4)},
-            "Alt", 8);
+    drawKeyEx(LAlt,
+              {(BOTTOM_KEY_SIZE * 2), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 4)},
+              BOTTOM_KEY_SIZE, "Alt", 8);
     break;
   case LSystem:
-    drawKey(LSystem, {(KEY_SIZE * 1), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 4)},
-            "Win", 8);
+    drawKeyEx(LSystem,
+              {(BOTTOM_KEY_SIZE * 1), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 4)},
+              BOTTOM_KEY_SIZE, "Win", 8);
     break;
   case RControl:
-    drawKey(RControl,
-            {(KEY_SIZE * 2) + SPACE_SIZE + (KEY_SIZE * 3),
+    drawKeyEx(RControl,
+              {(BOTTOM_KEY_SIZE * 3) + SPACE_SIZE + (BOTTOM_KEY_SIZE * 3),
+               KEY_SIZE + UPPER_PAD + (KEY_SIZE * 4)},
+              BOTTOM_KEY_SIZE, "Ctrl", 8);
+    break;
+  case RShift:
+    drawKeyEx(
+        RShift,
+        {SHIFT_SIZE + (KEY_SIZE * 10), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 3)},
+        RSHIFT_SIZE, "Shift", 8);
+    break;
+  case RAlt:
+    drawKeyEx(RAlt,
+              {(BOTTOM_KEY_SIZE * 3) + SPACE_SIZE,
+               KEY_SIZE + UPPER_PAD + (KEY_SIZE * 4)},
+              BOTTOM_KEY_SIZE, "Alt", 8);
+    break;
+  case RSystem:
+    break;
+  case Menu:
+    drawKeyEx(Menu,
+              {(BOTTOM_KEY_SIZE * 5) + SPACE_SIZE,
+               KEY_SIZE + UPPER_PAD + (KEY_SIZE * 4)},
+              BOTTOM_KEY_SIZE, "Menu", 8);
+    break;
+  case LBracket:
+    drawKey(LBracket,
+            {TAB_SIZE + (KEY_SIZE * 10), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 1)},
+            "[");
+    break;
+  case RBracket:
+    drawKey(RBracket,
+            {TAB_SIZE + (KEY_SIZE * 11), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 1)},
+            "]");
+    break;
+  case Semicolon:
+    drawKey(Semicolon,
+            {CAPS_SIZE + (KEY_SIZE * 9), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 2)},
+            ";");
+    break;
+  case Comma:
+    drawKey(
+        Comma,
+        {SHIFT_SIZE + (KEY_SIZE * 7), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 3)},
+        ",");
+    break;
+  case Period:
+    drawKey(
+        Period,
+        {SHIFT_SIZE + (KEY_SIZE * 8), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 3)},
+        ".");
+    break;
+  case Quote:
+    drawKey(
+        Quote,
+        {CAPS_SIZE + (KEY_SIZE * 10), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 2)},
+        "'");
+    break;
+  case Slash:
+    drawKey(
+        Slash,
+        {SHIFT_SIZE + (KEY_SIZE * 9), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 3)},
+        "/");
+    break;
+  case BackSlash:
+    drawKeyEx(
+        BackSlash,
+        {TAB_SIZE + (KEY_SIZE * 12), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 1)},
+        BACKSLASH_SIZE, "\\");
+    break;
+  case Tilde:
+    drawKey(Tilde, {0.f, KEY_SIZE + UPPER_PAD + (KEY_SIZE * 0)}, "`");
+    break;
+  case Equal:
+    drawKey(Equal, {(KEY_SIZE * 12), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 0)},
+            "=");
+    break;
+  case Hyphen:
+    drawKey(Hyphen, {(KEY_SIZE * 11), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 0)},
+            "-");
+    break;
+  case Space:
+    drawKeyEx(Space,
+              {(BOTTOM_KEY_SIZE * 3), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 4)},
+              SPACE_SIZE, " ");
+    break;
+  case Enter:
+    drawKeyEx(
+        Enter,
+        {CAPS_SIZE + (KEY_SIZE * 11), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 2)},
+        ENTER_SIZE, "Enter", 8);
+    break;
+  case Backspace:
+    drawKeyEx(Backspace,
+              {(KEY_SIZE * 13), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 0)},
+              BACKSPACE_SIZE, "Bckspc", 8);
+    break;
+  case Tab:
+    drawKeyEx(Tab, {0.f, KEY_SIZE + UPPER_PAD + (KEY_SIZE * 1)}, TAB_SIZE,
+              "Tab", 8);
+    break;
+  case PageUp:
+  case PageDown:
+  case End:
+  case Home:
+  case Insert:
+  case Delete:
+  case Add:
+  case Subtract:
+  case Multiply:
+  case Divide:
+    break;
+  case Left:
+    drawKey(Left,
+            {NUM_X - UPPER_PAD - (KEY_SIZE * 3),
              KEY_SIZE + UPPER_PAD + (KEY_SIZE * 4)},
-            "Ctrl", 8);
+            "<-", 8);
+    break;
+  case Right:
+    drawKey(Right,
+            {NUM_X - UPPER_PAD - (KEY_SIZE * 1),
+             KEY_SIZE + UPPER_PAD + (KEY_SIZE * 4)},
+            "->", 8);
+    break;
+  case Up:
+    drawKey(Up,
+            {NUM_X - UPPER_PAD - (KEY_SIZE * 2),
+             KEY_SIZE + UPPER_PAD + (KEY_SIZE * 3)},
+            "^", 8);
+    break;
+  case Down:
+    drawKey(Down,
+            {NUM_X - UPPER_PAD - (KEY_SIZE * 2),
+             KEY_SIZE + UPPER_PAD + (KEY_SIZE * 4)},
+            "v", 8);
+    break;
+  case KeyCount:
+    drawKeyEx(KeyCount, {0.f, KEY_SIZE + UPPER_PAD + (KEY_SIZE * 2)}, CAPS_SIZE,
+              "Caps", 8);
     break;
 
   case Numpad0:
