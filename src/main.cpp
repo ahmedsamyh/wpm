@@ -21,6 +21,8 @@ using namespace momo;
 #define ENTER_SIZE (KEY_SIZE * 2.25f)
 #define BACKSPACE_SIZE (KEY_SIZE * 2.f)
 
+static Vec2 keyboardPos = {16.f, 264.f};
+
 #define NUM_X                                                                  \
   ((BOTTOM_KEY_SIZE * 3) + SPACE_SIZE + (BOTTOM_KEY_SIZE * 4) + UPPER_PAD +    \
    (KEY_SIZE * 3) + UPPER_PAD)
@@ -422,28 +424,56 @@ void drawKeys(size_t key) {
 }
 
 void drawKeyboard() {
+  setViewPos(keyboardPos);
   for (auto &key : Data::keys) {
     drawKeys(key.keycode);
   }
+  defView();
 }
 
 struct MainScene : public Scene {
+  std::string buffer;
+  float keyRepeatTimeMax = 10.f;
+  float keyRepeatTime = keyRepeatTimeMax;
   MainScene() {
     ///
     id = 0;
-  };
+  }
 
-  void init() override{
-      ///
-  };
+  void init() override {
+    ///
+  }
 
-  void update(float delta) override{
-      ///
-  };
+  void input() override {
+    char key = getCharPressed();
+    if (key) {
+      buffer += key;
+    }
+
+    if (!buffer.empty() && keyPressed(Backspace)) {
+      buffer.pop_back();
+    }
+
+    if (keyPressed(Enter)) {
+      buffer += '\n';
+    }
+
+    if (!getCharHeld) {
+      keyRepeatTime = keyRepeatTimeMax;
+    } else if (keyRepeatTime > 0.f) {
+      keyRepeatTime -= Data::delta;
+    }
+  }
+
+  void update(float delta) override {
+    ///
+  }
 
   void draw() override {
     ///
     drawKeyboard();
+
+    drawText({16.f, 16.f}, buffer, KEY_SIZE / 2);
   }
 };
 

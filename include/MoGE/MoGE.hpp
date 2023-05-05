@@ -96,6 +96,8 @@ void setIcon(std::string icon, std::string prefix = "res/gfx/",
 void fullscreen();
 Vec2 screenToWorld(const Vec2 p);
 Vec2 worldToScreen(const Vec2 p);
+void setViewPos(const Vec2 &p = {0.f, 0.f});
+void defView();
 // drawing functions --------------------------------------------------
 void drawLine(Vec2 v1, Vec2 v2, Color col = WHITE);
 void drawLine2(Vec2 v1, Vec2 v2, Color col1 = WHITE, Color col2 = WHITE);
@@ -135,6 +137,9 @@ bool keyReleased(size_t k);
 bool keyHeld(size_t k);
 void handleKeys();
 void hotkeys();
+char getCharHeld();
+char getCharPressed();
+char getCharReleased();
 
 // mouse functions --------------------------------------------------
 bool mousePressed(size_t btn);
