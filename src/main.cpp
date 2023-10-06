@@ -1,18 +1,11 @@
-#include <MoGE/MoGE.hpp>
-#include <MoUI/MoUI.hpp>
-#include <format>
-#include <fstream>
+#define SFML_HELPER_IMPLEMENTATION
+#include <sfml-helper.hpp>
 
-using namespace momo;
+using namespace sh;
 
-#define S_WIDTH 1280
-#define S_HEIGHT 720
-#define WIDTH S_WIDTH / 1.5
-#define HEIGHT S_HEIGHT / 1.5
-
-#define KEY_SIZE 32
-#define UPPER_PAD (KEY_SIZE * 0.25)
-#define KEY_PAD (KEY_SIZE * 0.05)
+#define KEY_SIZE 48.f
+#define UPPER_PAD (KEY_SIZE * 0.25f)
+#define KEY_PAD (KEY_SIZE * 0.05f)
 
 #define TAB_SIZE (KEY_SIZE * 1.5f)
 #define CAPS_SIZE (KEY_SIZE * 1.75f)
@@ -24,508 +17,517 @@ using namespace momo;
 #define ENTER_SIZE (KEY_SIZE * 2.25f)
 #define BACKSPACE_SIZE (KEY_SIZE * 2.f)
 
-static Vec2 keyboardPos = {16.f, 264.f};
-
 #define NUM_X                                                                  \
   ((BOTTOM_KEY_SIZE * 3) + SPACE_SIZE + (BOTTOM_KEY_SIZE * 4) + UPPER_PAD +    \
    (KEY_SIZE * 3) + UPPER_PAD)
-void drawKeyEx(size_t key, const Vec2 _pos, const float width,
+
+
+// TODO: Maybe move the trim functions to stdcpp
+std::string& trim_right(std::string& str){
+  while (!str.empty() && std::isspace(str.back())){
+    str.pop_back();
+  }
+  return str;
+}
+
+std::string& trim_left(std::string& str){
+  while (!str.empty() && std::isspace(str[0])){
+    str = str.substr(1);
+  }
+  return str;
+}
+
+std::string& trim(std::string& str){return trim_right(trim_left(str)); }
+
+int main(int argc, char *argv[]) {
+  Data d;
+  d.init(1280, 720, 1, "wpm");
+
+  std::string buffer{};
+  std::string text{"TEXT"};
+  UI ui(d);
+  float time_passed{0.f}, time_done{0.f};
+  float character_per_sec{0.f};
+  bool done{false};
+
+  // read text from `input.txt`
+  std::ifstream ifs;
+  ifs.open("input.txt", std::ios::in);
+  if (!ifs.is_open()){
+    ERR("Could not open file...\n");
+  }
+
+  ifs.seekg(0, std::ios::end);
+  text.resize(int(ifs.tellg()) - 2);
+  ifs.seekg(0, std::ios::beg);
+  
+  ifs.read((char*)text.c_str(), text.size());
+  
+  ifs.close();
+
+  trim(text);
+
+  auto  draw_key_ex = [&](Key key, sf::Vector2f pos, float width,
                const std::string &keyStr, const int charSize = -1) {
-  Vec2 pos = _pos;
-  solidRect(pos, {width, KEY_SIZE},
-            (keyHeld(key) ? Color(255, 255, 255, 100) : Color(0, 0, 0, 0)));
-  drawRect(pos, {width, KEY_SIZE});
-  pushAlign();
-  setTextAlign(VA::Center, HA::Center);
-  drawText(pos + Vec2(width / 2.f, KEY_SIZE / 2.f), keyStr,
-           (charSize == -1 ? KEY_SIZE / 2 : charSize));
-  popAlign();
-}
+    d.draw_rect(pos, sf::Vector2f{width, KEY_SIZE}, TopLeft,
+		(d.k_held(key) ? sf::Color{255, 255, 255, 100} : sf::Color{0, 0, 0, 0}));
+	      // drawRect(pos, {width, KEY_SIZE});
+	      // d.draw_text(pos + Vec2(width / 2.f, KEY_SIZE / 2.f), keyStr,
+	      // (charSize == -1 ? KEY_SIZE / 2 : charSize));
+  };
 
-void drawKey(size_t key, const Vec2 _pos, const std::string &keyStr,
+  auto draw_key = [&](Key key, sf::Vector2f pos, const std::string &key_str,
              const int charSize = -1) {
-  drawKeyEx(key, _pos, KEY_SIZE, keyStr, charSize);
-}
+    draw_key_ex(key, pos, KEY_SIZE, key_str, charSize);
+  };
 
-void drawKeys(size_t key) {
-  switch (key) {
-  case A:
-    drawKey(A,
-            {CAPS_SIZE + (KEY_SIZE * 0), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 2)},
-            "A");
-    break;
-  case B:
-    drawKey(
-        B, {SHIFT_SIZE + (KEY_SIZE * 4), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 3)},
-        "B");
-    break;
-  case C:
-    drawKey(
-        C, {SHIFT_SIZE + (KEY_SIZE * 2), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 3)},
-        "C");
-    break;
-  case D:
-    drawKey(D,
-            {CAPS_SIZE + (KEY_SIZE * 2), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 2)},
-            "D");
-    break;
-  case E:
-    drawKey(E,
-            {TAB_SIZE + (KEY_SIZE * 2), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 1)},
-            "E");
-    break;
-  case F:
-    drawKey(F,
-            {CAPS_SIZE + (KEY_SIZE * 3), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 2)},
-            "F");
-    break;
-  case G:
-    drawKey(G,
-            {CAPS_SIZE + (KEY_SIZE * 4), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 2)},
-            "G");
-    break;
-  case H:
-    drawKey(H,
-            {CAPS_SIZE + (KEY_SIZE * 5), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 2)},
-            "H");
-    break;
-  case I:
-    drawKey(I,
-            {TAB_SIZE + (KEY_SIZE * 7), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 1)},
-            "I");
-    break;
-  case J:
-    drawKey(J,
-            {CAPS_SIZE + (KEY_SIZE * 6), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 2)},
-            "J");
-    break;
-  case K:
-    drawKey(K,
-            {CAPS_SIZE + (KEY_SIZE * 7), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 2)},
-            "K");
-    break;
-  case L:
-    drawKey(L,
-            {CAPS_SIZE + (KEY_SIZE * 8), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 2)},
-            "L");
-    break;
-  case M:
-    drawKey(
-        M, {SHIFT_SIZE + (KEY_SIZE * 6), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 3)},
-        "M");
-    break;
-  case N:
-    drawKey(
-        N, {SHIFT_SIZE + (KEY_SIZE * 5), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 3)},
-        "N");
-    break;
-  case O:
-    drawKey(O,
-            {TAB_SIZE + (KEY_SIZE * 8), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 1)},
-            "O");
-    break;
-  case P:
-    drawKey(P,
-            {TAB_SIZE + (KEY_SIZE * 9), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 1)},
-            "P");
-    break;
-  case Q:
-    drawKey(Q,
-            {TAB_SIZE + (KEY_SIZE * 0), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 1)},
-            "Q");
-    break;
-  case R:
-    drawKey(R,
-            {TAB_SIZE + (KEY_SIZE * 3), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 1)},
-            "R");
-    break;
-  case S:
-    drawKey(S,
-            {CAPS_SIZE + (KEY_SIZE * 1), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 2)},
-            "S");
-    break;
-  case T:
-    drawKey(T,
-            {TAB_SIZE + (KEY_SIZE * 4), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 1)},
-            "T");
-    break;
-  case U:
-    drawKey(U,
-            {TAB_SIZE + (KEY_SIZE * 6), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 1)},
-            "U");
-    break;
-  case V:
-    drawKey(
-        V, {SHIFT_SIZE + (KEY_SIZE * 3), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 3)},
-        "V");
-    break;
-  case W:
-    drawKey(W,
-            {TAB_SIZE + (KEY_SIZE * 1), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 1)},
-            "W");
-    break;
-  case X:
-    drawKey(
-        X, {SHIFT_SIZE + (KEY_SIZE * 1), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 3)},
-        "X");
-    break;
-  case Y:
-    drawKey(Y,
-            {TAB_SIZE + (KEY_SIZE * 5), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 1)},
-            "Y");
-    break;
-  case Z:
-    drawKey(
-        Z, {SHIFT_SIZE + (KEY_SIZE * 0), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 3)},
-        "Z");
-    break;
-  case Num0:
-    drawKey(Num0, {(KEY_SIZE * 10), KEY_SIZE + UPPER_PAD}, "0");
-    break;
-  case Num1:
-    drawKey(Num1, {(KEY_SIZE * 1), KEY_SIZE + UPPER_PAD}, "1");
-    break;
-  case Num2:
-    drawKey(Num2, {(KEY_SIZE * 2), KEY_SIZE + UPPER_PAD}, "2");
-    break;
-  case Num3:
-    drawKey(Num3, {(KEY_SIZE * 3), KEY_SIZE + UPPER_PAD}, "3");
-    break;
-  case Num4:
-    drawKey(Num4, {(KEY_SIZE * 4), KEY_SIZE + UPPER_PAD}, "4");
-    break;
-  case Num5:
-    drawKey(Num5, {(KEY_SIZE * 5), KEY_SIZE + UPPER_PAD}, "5");
-    break;
-  case Num6:
-    drawKey(Num6, {(KEY_SIZE * 6), KEY_SIZE + UPPER_PAD}, "6");
-    break;
-  case Num7:
-    drawKey(Num7, {(KEY_SIZE * 7), KEY_SIZE + UPPER_PAD}, "7");
-    break;
-  case Num8:
-    drawKey(Num8, {(KEY_SIZE * 8), KEY_SIZE + UPPER_PAD}, "8");
-    break;
-  case Num9:
-    drawKey(Num9, {(KEY_SIZE * 9), KEY_SIZE + UPPER_PAD}, "9");
-    break;
-  case Escape:
-    drawKey(Escape, {0.f, 0.f}, "Esc", 8);
-    break;
-  case LControl:
-    drawKeyEx(LControl, {0.f, KEY_SIZE + UPPER_PAD + (KEY_SIZE * 4)},
-              BOTTOM_KEY_SIZE, "Ctrl", 8);
-    break;
-  case LShift:
-    drawKeyEx(LShift, {0.f, KEY_SIZE + UPPER_PAD + (KEY_SIZE * 3)}, SHIFT_SIZE,
-              "Shift", 8);
-    break;
-  case LAlt:
-    drawKeyEx(LAlt,
-              {(BOTTOM_KEY_SIZE * 2), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 4)},
-              BOTTOM_KEY_SIZE, "Alt", 8);
-    break;
-  case LSystem:
-    drawKeyEx(LSystem,
-              {(BOTTOM_KEY_SIZE * 1), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 4)},
-              BOTTOM_KEY_SIZE, "Win", 8);
-    break;
-  case RControl:
-    drawKeyEx(RControl,
-              {(BOTTOM_KEY_SIZE * 3) + SPACE_SIZE + (BOTTOM_KEY_SIZE * 3),
-               KEY_SIZE + UPPER_PAD + (KEY_SIZE * 4)},
-              BOTTOM_KEY_SIZE, "Ctrl", 8);
-    break;
-  case RShift:
-    drawKeyEx(
-        RShift,
-        {SHIFT_SIZE + (KEY_SIZE * 10), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 3)},
-        RSHIFT_SIZE, "Shift", 8);
-    break;
-  case RAlt:
-    drawKeyEx(RAlt,
-              {(BOTTOM_KEY_SIZE * 3) + SPACE_SIZE,
-               KEY_SIZE + UPPER_PAD + (KEY_SIZE * 4)},
-              BOTTOM_KEY_SIZE, "Alt", 8);
-    break;
-  case RSystem:
-    break;
-  case Menu:
-    drawKeyEx(Menu,
-              {(BOTTOM_KEY_SIZE * 5) + SPACE_SIZE,
-               KEY_SIZE + UPPER_PAD + (KEY_SIZE * 4)},
-              BOTTOM_KEY_SIZE, "Menu", 8);
-    break;
-  case LBracket:
-    drawKey(LBracket,
-            {TAB_SIZE + (KEY_SIZE * 10), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 1)},
-            "[");
-    break;
-  case RBracket:
-    drawKey(RBracket,
-            {TAB_SIZE + (KEY_SIZE * 11), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 1)},
-            "]");
-    break;
-  case Semicolon:
-    drawKey(Semicolon,
-            {CAPS_SIZE + (KEY_SIZE * 9), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 2)},
-            ";");
-    break;
-  case Comma:
-    drawKey(
-        Comma,
-        {SHIFT_SIZE + (KEY_SIZE * 7), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 3)},
-        ",");
-    break;
-  case Period:
-    drawKey(
-        Period,
-        {SHIFT_SIZE + (KEY_SIZE * 8), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 3)},
-        ".");
-    break;
-  case Quote:
-    drawKey(
-        Quote,
-        {CAPS_SIZE + (KEY_SIZE * 10), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 2)},
-        "'");
-    break;
-  case Slash:
-    drawKey(
-        Slash,
-        {SHIFT_SIZE + (KEY_SIZE * 9), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 3)},
-        "/");
-    break;
-  case BackSlash:
-    drawKeyEx(
-        BackSlash,
-        {TAB_SIZE + (KEY_SIZE * 12), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 1)},
-        BACKSLASH_SIZE, "\\");
-    break;
-  case Tilde:
-    drawKey(Tilde, {0.f, KEY_SIZE + UPPER_PAD + (KEY_SIZE * 0)}, "`");
-    break;
-  case Equal:
-    drawKey(Equal, {(KEY_SIZE * 12), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 0)},
-            "=");
-    break;
-  case Hyphen:
-    drawKey(Hyphen, {(KEY_SIZE * 11), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 0)},
-            "-");
-    break;
-  case Space:
-    drawKeyEx(Space,
-              {(BOTTOM_KEY_SIZE * 3), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 4)},
-              SPACE_SIZE, " ");
-    break;
-  case Enter:
-    drawKeyEx(
-        Enter,
-        {CAPS_SIZE + (KEY_SIZE * 11), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 2)},
-        ENTER_SIZE, "Enter", 8);
-    break;
-  case Backspace:
-    drawKeyEx(Backspace,
-              {(KEY_SIZE * 13), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 0)},
-              BACKSPACE_SIZE, "Bckspc", 8);
-    break;
-  case Tab:
-    drawKeyEx(Tab, {0.f, KEY_SIZE + UPPER_PAD + (KEY_SIZE * 1)}, TAB_SIZE,
-              "Tab", 8);
-    break;
-  case PageUp:
-  case PageDown:
-  case End:
-  case Home:
-  case Insert:
-  case Delete:
-  case Add:
-  case Subtract:
-  case Multiply:
-  case Divide:
-    break;
-  case Left:
-    drawKey(Left,
-            {NUM_X - UPPER_PAD - (KEY_SIZE * 3),
-             KEY_SIZE + UPPER_PAD + (KEY_SIZE * 4)},
-            "<-", 8);
-    break;
-  case Right:
-    drawKey(Right,
-            {NUM_X - UPPER_PAD - (KEY_SIZE * 1),
-             KEY_SIZE + UPPER_PAD + (KEY_SIZE * 4)},
-            "->", 8);
-    break;
-  case Up:
-    drawKey(Up,
-            {NUM_X - UPPER_PAD - (KEY_SIZE * 2),
-             KEY_SIZE + UPPER_PAD + (KEY_SIZE * 3)},
-            "^", 8);
-    break;
-  case Down:
-    drawKey(Down,
-            {NUM_X - UPPER_PAD - (KEY_SIZE * 2),
-             KEY_SIZE + UPPER_PAD + (KEY_SIZE * 4)},
-            "v", 8);
-    break;
-  case KeyCount:
-    drawKeyEx(KeyCount, {0.f, KEY_SIZE + UPPER_PAD + (KEY_SIZE * 2)}, CAPS_SIZE,
-              "Caps", 8);
-    break;
+  auto draw_keys = [&](Key key) {
+    switch (key) {
+    case Key::A:
+      draw_key(Key::A,
+	      {CAPS_SIZE + (KEY_SIZE * 0), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 2)},
+	      "A");
+      break;
+    case Key::B:
+      draw_key(Key::B, {SHIFT_SIZE + (KEY_SIZE * 4), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 3)},
+	      "B");
+      break;
+    case Key::C:
+      draw_key(Key::C, {SHIFT_SIZE + (KEY_SIZE * 2), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 3)},
+	      "C");
+      break;
+    case Key::D:
+      draw_key(Key::D,
+	      {CAPS_SIZE + (KEY_SIZE * 2), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 2)},
+	      "D");
+      break;
+    case Key::E:
+      draw_key(Key::E,
+	      {TAB_SIZE + (KEY_SIZE * 2), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 1)},
+	      "E");
+      break;
+    case Key::F:
+      draw_key(Key::F,
+	      {CAPS_SIZE + (KEY_SIZE * 3), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 2)},
+	      "F");
+      break;
+    case Key::G:
+      draw_key(Key::G,
+	      {CAPS_SIZE + (KEY_SIZE * 4), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 2)},
+	      "G");
+      break;
+    case Key::H:
+      draw_key(Key::H,
+	      {CAPS_SIZE + (KEY_SIZE * 5), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 2)},
+	      "H");
+      break;
+    case Key::I:
+      draw_key(Key::I,
+	      {TAB_SIZE + (KEY_SIZE * 7), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 1)},
+	      "I");
+      break;
+    case Key::J:
+      draw_key(Key::J,
+	      {CAPS_SIZE + (KEY_SIZE * 6), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 2)},
+	      "J");
+      break;
+    case Key::K:
+      draw_key(Key::K,
+	      {CAPS_SIZE + (KEY_SIZE * 7), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 2)},
+	      "K");
+      break;
+    case Key::L:
+      draw_key(Key::L,
+	      {CAPS_SIZE + (KEY_SIZE * 8), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 2)},
+	      "L");
+      break;
+    case Key::M:
+      draw_key(Key::M, {SHIFT_SIZE + (KEY_SIZE * 6), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 3)},
+	      "M");
+      break;
+    case Key::N:
+      draw_key(Key::N, {SHIFT_SIZE + (KEY_SIZE * 5), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 3)},
+	      "N");
+      break;
+    case Key::O:
+      draw_key(Key::O,
+	      {TAB_SIZE + (KEY_SIZE * 8), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 1)},
+	      "O");
+      break;
+    case Key::P:
+      draw_key(Key::P,
+	      {TAB_SIZE + (KEY_SIZE * 9), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 1)},
+	      "P");
+      break;
+    case Key::Q:
+      draw_key(Key::Q,
+	      {TAB_SIZE + (KEY_SIZE * 0), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 1)},
+	      "Q");
+      break;
+    case Key::R:
+      draw_key(Key::R,
+	      {TAB_SIZE + (KEY_SIZE * 3), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 1)},
+	      "R");
+      break;
+    case Key::S:
+      draw_key(Key::S,
+	      {CAPS_SIZE + (KEY_SIZE * 1), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 2)},
+	      "S");
+      break;
+    case Key::T:
+      draw_key(Key::T,
+	      {TAB_SIZE + (KEY_SIZE * 4), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 1)},
+	      "T");
+      break;
+    case Key::U:
+      draw_key(Key::U,
+	      {TAB_SIZE + (KEY_SIZE * 6), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 1)},
+	      "U");
+      break;
+    case Key::V:
+      draw_key(Key::V, {SHIFT_SIZE + (KEY_SIZE * 3), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 3)},
+	      "V");
+      break;
+    case Key::W:
+      draw_key(Key::W,
+	      {TAB_SIZE + (KEY_SIZE * 1), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 1)},
+	      "W");
+      break;
+    case Key::X:
+      draw_key(Key::X, {SHIFT_SIZE + (KEY_SIZE * 1), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 3)},
+	      "X");
+      break;
+    case Key::Y:
+      draw_key(Key::Y,
+	      {TAB_SIZE + (KEY_SIZE * 5), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 1)},
+	      "Y");
+      break;
+    case Key::Z:
+      draw_key(Key::Z, {SHIFT_SIZE + (KEY_SIZE * 0), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 3)},
+	      "Z");
+      break;
+    case Key::Num0:
+      draw_key(Key::Num0, {(KEY_SIZE * 10), KEY_SIZE + UPPER_PAD}, "0");
+      break;
+    case Key::Num1:
+      draw_key(Key::Num1, {(KEY_SIZE * 1), KEY_SIZE + UPPER_PAD}, "1");
+      break;
+    case Key::Num2:
+      draw_key(Key::Num2, {(KEY_SIZE * 2), KEY_SIZE + UPPER_PAD}, "2");
+      break;
+    case Key::Num3:
+      draw_key(Key::Num3, {(KEY_SIZE * 3), KEY_SIZE + UPPER_PAD}, "3");
+      break;
+    case Key::Num4:
+      draw_key(Key::Num4, {(KEY_SIZE * 4), KEY_SIZE + UPPER_PAD}, "4");
+      break;
+    case Key::Num5:
+      draw_key(Key::Num5, {(KEY_SIZE * 5), KEY_SIZE + UPPER_PAD}, "5");
+      break;
+    case Key::Num6:
+      draw_key(Key::Num6, {(KEY_SIZE * 6), KEY_SIZE + UPPER_PAD}, "6");
+      break;
+    case Key::Num7:
+      draw_key(Key::Num7, {(KEY_SIZE * 7), KEY_SIZE + UPPER_PAD}, "7");
+      break;
+    case Key::Num8:
+      draw_key(Key::Num8, {(KEY_SIZE * 8), KEY_SIZE + UPPER_PAD}, "8");
+      break;
+    case Key::Num9:
+      draw_key(Key::Num9, {(KEY_SIZE * 9), KEY_SIZE + UPPER_PAD}, "9");
+      break;
+    case Key::Escape:
+      draw_key(Key::Escape, {0.f, 0.f}, "Esc", 8);
+      break;
+    case Key::LControl:
+      draw_key_ex(Key::LControl, {0.f, KEY_SIZE + UPPER_PAD + (KEY_SIZE * 4)},
+		BOTTOM_KEY_SIZE, "Ctrl", 8);
+      break;
+    case Key::LShift:
+      draw_key_ex(Key::LShift, {0.f, KEY_SIZE + UPPER_PAD + (KEY_SIZE * 3)}, SHIFT_SIZE,
+		"Shift", 8);
+      break;
+    case Key::LAlt:
+      draw_key_ex(Key::LAlt,
+		{(BOTTOM_KEY_SIZE * 2), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 4)},
+		BOTTOM_KEY_SIZE, "Alt", 8);
+      break;
+    case Key::LSystem:
+      draw_key_ex(Key::LSystem,
+		{(BOTTOM_KEY_SIZE * 1), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 4)},
+		BOTTOM_KEY_SIZE, "Win", 8);
+      break;
+    case Key::RControl:
+      draw_key_ex(Key::RControl, {(BOTTOM_KEY_SIZE * 3) + SPACE_SIZE + (BOTTOM_KEY_SIZE * 3), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 4)},
+		BOTTOM_KEY_SIZE, "Ctrl", 8);
+      break;
+    case Key::RShift:
+      draw_key_ex(Key::RShift, {SHIFT_SIZE + (KEY_SIZE * 10), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 3)}, RSHIFT_SIZE, "Shift", 8);
+      break;
+    case Key::RAlt:
+      draw_key_ex(Key::RAlt,
+		{(BOTTOM_KEY_SIZE * 3) + SPACE_SIZE,
+		 KEY_SIZE + UPPER_PAD + (KEY_SIZE * 4)},
+		BOTTOM_KEY_SIZE, "Alt", 8);
+      break;
+    case Key::RSystem:
+      break;
+    case Key::Menu:
+      draw_key_ex(Key::Menu,
+		{(BOTTOM_KEY_SIZE * 5) + SPACE_SIZE,
+		 KEY_SIZE + UPPER_PAD + (KEY_SIZE * 4)},
+		BOTTOM_KEY_SIZE, "Menu", 8);
+      break;
+    case Key::LBracket:
+      draw_key(Key::LBracket,
+	      {TAB_SIZE + (KEY_SIZE * 10), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 1)},
+	      "[");
+      break;
+    case Key::RBracket:
+      draw_key(Key::RBracket,
+	      {TAB_SIZE + (KEY_SIZE * 11), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 1)},
+	      "]");
+      break;
+    case Key::Semicolon:
+      draw_key(Key::Semicolon,
+	      {CAPS_SIZE + (KEY_SIZE * 9), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 2)},
+	      ";");
+      break;
+    case Key::Comma:
+      draw_key(Key::Comma,
+	      {SHIFT_SIZE + (KEY_SIZE * 7), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 3)},
+	      ",");
+      break;
+    case Key::Period:
+      draw_key(Key::Period,
+	      {SHIFT_SIZE + (KEY_SIZE * 8), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 3)},
+	      ".");
+      break;
+    case Key::Quote:
+      draw_key(Key::Quote,
+	      {CAPS_SIZE + (KEY_SIZE * 10), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 2)},
+	      "'");
+      break;
+    case Key::Slash:
+      draw_key(Key::Slash,
+	      {SHIFT_SIZE + (KEY_SIZE * 9), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 3)},
+	      "/");
+      break;
+    case Key::BackSlash:
+      draw_key_ex(Key::BackSlash,
+		{TAB_SIZE + (KEY_SIZE * 12), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 1)},
+		BACKSLASH_SIZE, "\\");
+      break;
+    case Key::Tilde:
+      draw_key(Key::Tilde, {0.f, KEY_SIZE + UPPER_PAD + (KEY_SIZE * 0)}, "`");
+      break;
+    case Key::Equal:
+      draw_key(Key::Equal, {(KEY_SIZE * 12), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 0)},
+	      "=");
+      break;
+    case Key::Hyphen:
+      draw_key(Key::Hyphen, {(KEY_SIZE * 11), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 0)},
+	      "-");
+      break;
+    case Key::Space:
+      draw_key_ex(Key::Space,
+		{(BOTTOM_KEY_SIZE * 3), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 4)},
+		SPACE_SIZE, " ");
+      break;
+    case Key::Enter:
+      draw_key_ex(Key::Enter,
+		{CAPS_SIZE + (KEY_SIZE * 11), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 2)},
+		ENTER_SIZE, "Enter", 8);
+      break;
+    case Key::Backspace:
+      draw_key_ex(Key::Backspace,
+		{(KEY_SIZE * 13), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 0)},
+		BACKSPACE_SIZE, "Bckspc", 8);
+      break;
+    case Key::Tab:
+      draw_key_ex(Key::Tab, {0.f, KEY_SIZE + UPPER_PAD + (KEY_SIZE * 1)}, TAB_SIZE,
+		"Tab", 8);
+      break;
+    case Key::PageUp:
+    case Key::PageDown:
+    case Key::End:
+    case Key::Home:
+    case Key::Insert:
+    case Key::Delete:
+    case Key::Add:
+    case Key::Subtract:
+    case Key::Multiply:
+    case Key::Divide:
+      break;
+    case Key::Left:
+      draw_key(Key::Left,
+	      {NUM_X - UPPER_PAD - (KEY_SIZE * 3),
+	       KEY_SIZE + UPPER_PAD + (KEY_SIZE * 4)},
+	      "<-", 8);
+      break;
+    case Key::Right:
+      draw_key(Key::Right,
+	      {NUM_X - UPPER_PAD - (KEY_SIZE * 1),
+	       KEY_SIZE + UPPER_PAD + (KEY_SIZE * 4)},
+	      "->", 8);
+      break;
+    case Key::Up:
+      draw_key(Key::Up,
+	      {NUM_X - UPPER_PAD - (KEY_SIZE * 2),
+	       KEY_SIZE + UPPER_PAD + (KEY_SIZE * 3)},
+	      "^", 8);
+      break;
+    case Key::Down:
+      draw_key(Key::Down,
+	      {NUM_X - UPPER_PAD - (KEY_SIZE * 2),
+	       KEY_SIZE + UPPER_PAD + (KEY_SIZE * 4)},
+	      "v", 8);
+      break;
+    case Key::KeyCount:
+      draw_key_ex(Key::KeyCount, {0.f, KEY_SIZE + UPPER_PAD + (KEY_SIZE * 2)}, CAPS_SIZE,
+		"Caps", 8);
+      break;
 
-  case Numpad0:
-    drawKeyEx(Numpad0, {NUM_X, KEY_SIZE + UPPER_PAD + (KEY_SIZE * 4)},
-              KEY_SIZE * 2, "0");
-    break;
-  case Numpad1:
-    drawKey(Numpad1, {NUM_X, KEY_SIZE + UPPER_PAD + (KEY_SIZE * 3)}, "1");
-    break;
-  case Numpad2:
-    drawKey(Numpad2,
-            {NUM_X + (KEY_SIZE * 1), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 3)},
-            "2");
-    break;
-  case Numpad3:
-    drawKey(Numpad3,
-            {NUM_X + (KEY_SIZE * 2), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 3)},
-            "3");
-    break;
-  case Numpad4:
-    drawKey(Numpad4,
-            {NUM_X + (KEY_SIZE * 0), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 2)},
-            "4");
-    break;
-  case Numpad5:
-    drawKey(Numpad5,
-            {NUM_X + (KEY_SIZE * 1), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 2)},
-            "5");
-    break;
-  case Numpad6:
-    drawKey(Numpad6,
-            {NUM_X + (KEY_SIZE * 2), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 2)},
-            "6");
-    break;
-  case Numpad7:
-    drawKey(Numpad7,
-            {NUM_X + (KEY_SIZE * 0), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 1)},
-            "7");
-    break;
-  case Numpad8:
-    drawKey(Numpad8,
-            {NUM_X + (KEY_SIZE * 1), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 1)},
-            "8");
-    break;
-  case Numpad9:
-    drawKey(Numpad9,
-            {NUM_X + (KEY_SIZE * 2), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 1)},
-            "9");
-    break;
+    case Key::Numpad0:
+      draw_key_ex(Key::Numpad0, {NUM_X, KEY_SIZE + UPPER_PAD + (KEY_SIZE * 4)},
+		KEY_SIZE * 2, "0");
+      break;
+    case Key::Numpad1:
+      draw_key(Key::Numpad1, {NUM_X, KEY_SIZE + UPPER_PAD + (KEY_SIZE * 3)}, "1");
+      break;
+    case Key::Numpad2:
+      draw_key(Key::Numpad2,
+	      {NUM_X + (KEY_SIZE * 1), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 3)},
+	      "2");
+      break;
+    case Key::Numpad3:
+      draw_key(Key::Numpad3,
+	      {NUM_X + (KEY_SIZE * 2), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 3)},
+	      "3");
+      break;
+    case Key::Numpad4:
+      draw_key(Key::Numpad4,
+	      {NUM_X + (KEY_SIZE * 0), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 2)},
+	      "4");
+      break;
+    case Key::Numpad5:
+      draw_key(Key::Numpad5,
+	      {NUM_X + (KEY_SIZE * 1), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 2)},
+	      "5");
+      break;
+    case Key::Numpad6:
+      draw_key(Key::Numpad6,
+	      {NUM_X + (KEY_SIZE * 2), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 2)},
+	      "6");
+      break;
+    case Key::Numpad7:
+      draw_key(Key::Numpad7,
+	      {NUM_X + (KEY_SIZE * 0), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 1)},
+	      "7");
+      break;
+    case Key::Numpad8:
+      draw_key(Key::Numpad8,
+	      {NUM_X + (KEY_SIZE * 1), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 1)},
+	      "8");
+      break;
+    case Key::Numpad9:
+      draw_key(Key::Numpad9,
+	      {NUM_X + (KEY_SIZE * 2), KEY_SIZE + UPPER_PAD + (KEY_SIZE * 1)},
+	      "9");
+      break;
 
-  default: {
-    // UNREACHABLE();
-  } break;
-  }
-}
-
-void drawKeyboard() {
-  setViewPos(keyboardPos);
-  for (auto &key : Data::keys) {
-    drawKeys(key.keycode);
-  }
-  defView();
-}
-
-struct MainScene : public Scene {
-  std::string buffer;
-  std::string text;
-  UI ui;
-  float time_passed = 0.f, time_done = 0.f;
-  int character_per_sec = 0;
-  bool done = false;
-  MainScene() {
-    ///
-    id = 0;
-  }
-
-  void init() override {
-    ///
-    std::ifstream ifs;
-    ifs.open("input.txt");
-
-    if (ifs.is_open()) {
-
-      ifs >> text;
-
-      ifs.close();
+    default: {
+      // UNREACHABLE();
+    } break;
     }
-  }
+  };
 
-  void input() override {
-    char key = getCharEntered();
-    if (key != -1 && key != 8 && key != '\r') {
-      buffer += (char)key;
+  auto  draw_keyboard = [&]() {
+    d.camera_view();
+    sf::Vector2f padding{10.f, 35.f};
+    d.camera_follow({(d.width/2.f) - padding.x, -padding.y});
+    for (size_t i=0; i < int(Key::KeyCount); ++i) {
+      draw_keys(Key(i));
     }
-    if (keyPressed(Escape)) {
-      buffer.pop_back();
-    }
+    d.default_view();
+  };
+  
+  // game loop
+  while (d.win.isOpen()) {
+    // calculate delta time
+    float delta = d.calc_delta();
 
-    if (buffer.size() > 0 && keyPressed(Backspace)) {
-      buffer.pop_back();
-    }
+    // update window title
+    d.update_title();
 
-    if (buffer.size() > 0 && keyHeld(LControl) && keyHeld(LShift) &&
-        keyPressed(Backspace)) {
-      buffer.clear();
+    // event loop
+    sf::Event e;
+    d.update_mouse();
+    d.update_key();
+    while (d.win.pollEvent(e)) {
+      d.handle_close(e);
+      d.update_mouse_event(e);
+      d.update_key_event(e);
+      d.handle_text(e, buffer);
     }
-  }
+    if (buffer.size() > text.size()) buffer.pop_back();
 
-  void update(float delta) override {
-    ///
-    if (!done) {
-      time_passed += delta;
-    }
+    // clear
+    d.clear();
 
-    if (buffer.starts_with(text)) {
+    // update
+    if (!done) time_passed += delta;
+
+    if (buffer == text){
       time_done = time_passed;
       done = true;
     }
 
-    character_per_sec = buffer.size() / time_passed;
-  }
+    character_per_sec = float(buffer.size()) / time_passed;
 
-  void draw() override {
-    ///
-    drawKeyboard();
+    // draw
+    draw_keyboard();
 
-    { // view
-      drawText({AW / 2.f, 0.f}, std::format("time: {}s", time_passed),
-               KEY_SIZE / 2);
+    ui.begin({d.width-200.f, 10.f});
 
-      drawText({AW / 2.f, KEY_SIZE / 2},
-               std::format("ch/s: {}", character_per_sec), KEY_SIZE / 2);
+    ui.text(FMT("time: {:.2f}s", time_passed), TopLeft);
+    ui.text(FMT("ch/s: {:.2f}", character_per_sec), TopLeft);
 
-      setViewPos({16.f, 16.f});
-      drawText({0.f, 0.f}, text, KEY_SIZE / 2, Color(255, 255, 255, 100));
+    ui.end();
 
-      for (size_t i = 0; i < buffer.size(); ++i) {
-        char ch = buffer[i];
-        Color col = WHITE;
-        if (!text.empty() && i < text.size()) {
-          if (ch != text[i]) {
-            col = RED;
-          }
-        }
-        drawText({float(i * KEY_SIZE / 2), 0.f}, std::string{ch}, KEY_SIZE / 2,
-                 col);
+    // d.draw_text({0.f, 0.f}, text, TopLeft, DEFAULT_CHAR_SIZE, sf::Color(255, 255, 255, 100));
+
+    sf::Vector2f text_pos{20.f, 20.f};
+    size_t pos_i = 0;
+    for (size_t i = 0; i < text.size(); ++i) {
+      char ch = text[i];
+      
+      if (ch == '\r' || ch == '\n'){
+	text_pos.y += DEFAULT_CHAR_SIZE + 2.f;
+	pos_i = 0;
+	continue
+      }
+      
+      sf::Color col = sf::Color::White;
+      if (i > buffer.size()-1 || buffer.empty()){
+	col.a = 100;
+      }
+      
+      if (!buffer.empty() && i < buffer.size()){
+	if (ch != buffer[i]) col = sf::Color::Red;
       }
 
-      defView();
+      const float char_spacing{2.f};
+      d.draw_text(text_pos + sf::Vector2f{(float(pos_i) * char_spacing) + float(pos_i) * DEFAULT_CHAR_SIZE/2.f, 0.f}, std::string{ch}, TopLeft, DEFAULT_CHAR_SIZE, col);
+      pos_i++;
     }
-  }
-};
+    
 
-int main(int argc, char *argv[]) {
-  MAIN(MainScene);
-  create("wpm", S_WIDTH, S_HEIGHT, WIDTH, HEIGHT);
-  run();
+    // display
+    d.display();
+  }
+  // MAIN(MainScene);
+  // create("wpm", S_WIDTH, S_HEIGHT, WIDTH, HEIGHT);
+  // run();
   return 0;
 }
