@@ -18,36 +18,36 @@ enum class HA { Center = 0, Right, Left };
 enum class VA { Center = 0, Top, Bottom };
 
 // Game Data --------------------------------------------------
-namespace Data {
-extern sf::RenderWindow *win;
-extern sf::RenderTexture *renTex;
-extern Vec2 screenSize;
-extern Vec2 actualSize;
-extern bool isFullscreen;
-extern bool isVsync;
-extern bool running;
-extern std::string title;
-extern float delta;
-extern std::vector<scene_ptr> scenes;
-extern size_t currentScene;
-extern Mouse mouse;
-extern Mouse prevMouse;
-extern std::vector<Key> keys;
-extern std::vector<Key> prevKeys;
-extern AssetManager assets;
-extern sf::VertexArray line;
-extern sf::VertexArray triangle;
-extern sf::Vertex point;
-extern sf::RectangleShape rect;
-extern sf::CircleShape circle;
-extern float time;
-extern sf::Text text;
-extern VA textVAlignment;
-extern HA textHAlignment;
-extern sf::BlendMode blendMode;
-extern std::stack<std::pair<VA, HA>> alignStack;
-extern std::stack<sf::BlendMode> blendStack;
-extern size_t charSize;
-}; // namespace Data
+struct Data {
+  static sf::RenderWindow *win;
+  static sf::RenderTexture *renTex;
+  static Vec2 screenSize;
+  static Vec2 actualSize;
+  static bool isFullscreen;
+  static bool isVsync;
+  static bool running;
+  static std::string title;
+  static float delta;
+  static std::vector<scene_ptr> scenes;
+  static size_t currentScene;
+  static Mouse mouse;
+  static Mouse prevMouse;
+  static std::vector<Key> keys;
+  static AssetManager assets;
+  static sf::VertexArray line;
+  static sf::VertexArray triangle;
+  static sf::Vertex point;
+  static sf::RectangleShape rect;
+  static sf::CircleShape circle;
+  static float time;
+  static sf::Text text;
+  static VA textVAlignment;
+  static HA textHAlignment;
+  static sf::BlendMode blendMode;
+  static std::stack<std::pair<VA, HA>> alignStack;
+  static std::stack<sf::BlendMode> blendStack;
+  static size_t charSize;
+  static int lastCharEntered;
+};
 
 } // namespace momo

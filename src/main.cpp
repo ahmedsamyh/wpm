@@ -1,4 +1,7 @@
-#include <MoGE/Moge.hpp>
+#include <MoGE/MoGE.hpp>
+#include <MoUI/MoUI.hpp>
+#include <format>
+#include <fstream>
 
 using namespace momo;
 
@@ -26,12 +29,12 @@ static Vec2 keyboardPos = {16.f, 264.f};
 #define NUM_X                                                                  \
   ((BOTTOM_KEY_SIZE * 3) + SPACE_SIZE + (BOTTOM_KEY_SIZE * 4) + UPPER_PAD +    \
    (KEY_SIZE * 3) + UPPER_PAD)
-
 void drawKeyEx(size_t key, const Vec2 _pos, const float width,
                const std::string &keyStr, const int charSize = -1) {
   Vec2 pos = _pos;
-  fillRect(pos, {width, KEY_SIZE},
-           (keyHeld(key) ? Color(255, 255, 255, 100) : Color(0, 0, 0, 0)));
+  solidRect(pos, {width, KEY_SIZE},
+            (keyHeld(key) ? Color(255, 255, 255, 100) : Color(0, 0, 0, 0)));
+  drawRect(pos, {width, KEY_SIZE});
   pushAlign();
   setTextAlign(VA::Center, HA::Center);
   drawText(pos + Vec2(width / 2.f, KEY_SIZE / 2.f), keyStr,
@@ -433,8 +436,11 @@ void drawKeyboard() {
 
 struct MainScene : public Scene {
   std::string buffer;
-  float keyRepeatTimeMax = 10.f;
-  float keyRepeatTime = keyRepeatTimeMax;
+  std::string text;
+  UI ui;
+  float time_passed = 0.f, time_done = 0.f;
+  int character_per_sec = 0;
+  bool done = false;
   MainScene() {
     ///
     id = 0;
@@ -442,38 +448,78 @@ struct MainScene : public Scene {
 
   void init() override {
     ///
+    std::ifstream ifs;
+    ifs.open("input.txt");
+
+    if (ifs.is_open()) {
+
+      ifs >> text;
+
+      ifs.close();
+    }
   }
 
   void input() override {
-    char key = getCharPressed();
-    if (key) {
-      buffer += key;
+    char key = getCharEntered();
+    if (key != -1 && key != 8 && key != '\r') {
+      buffer += (char)key;
     }
-
-    if (!buffer.empty() && keyPressed(Backspace)) {
+    if (keyPressed(Escape)) {
       buffer.pop_back();
     }
 
-    if (keyPressed(Enter)) {
-      buffer += '\n';
+    if (buffer.size() > 0 && keyPressed(Backspace)) {
+      buffer.pop_back();
     }
 
-    if (!getCharHeld) {
-      keyRepeatTime = keyRepeatTimeMax;
-    } else if (keyRepeatTime > 0.f) {
-      keyRepeatTime -= Data::delta;
+    if (buffer.size() > 0 && keyHeld(LControl) && keyHeld(LShift) &&
+        keyPressed(Backspace)) {
+      buffer.clear();
     }
   }
 
   void update(float delta) override {
     ///
+    if (!done) {
+      time_passed += delta;
+    }
+
+    if (buffer.starts_with(text)) {
+      time_done = time_passed;
+      done = true;
+    }
+
+    character_per_sec = buffer.size() / time_passed;
   }
 
   void draw() override {
     ///
     drawKeyboard();
 
-    drawText({16.f, 16.f}, buffer, KEY_SIZE / 2);
+    { // view
+      drawText({AW / 2.f, 0.f}, std::format("time: {}s", time_passed),
+               KEY_SIZE / 2);
+
+      drawText({AW / 2.f, KEY_SIZE / 2},
+               std::format("ch/s: {}", character_per_sec), KEY_SIZE / 2);
+
+      setViewPos({16.f, 16.f});
+      drawText({0.f, 0.f}, text, KEY_SIZE / 2, Color(255, 255, 255, 100));
+
+      for (size_t i = 0; i < buffer.size(); ++i) {
+        char ch = buffer[i];
+        Color col = WHITE;
+        if (!text.empty() && i < text.size()) {
+          if (ch != text[i]) {
+            col = RED;
+          }
+        }
+        drawText({float(i * KEY_SIZE / 2), 0.f}, std::string{ch}, KEY_SIZE / 2,
+                 col);
+      }
+
+      defView();
+    }
   }
 };
 

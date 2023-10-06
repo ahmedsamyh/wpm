@@ -38,7 +38,6 @@ namespace momo {
 #define PRINT_VAR(var) std::cout << #var << " = " << var << "\n"
 #define PRINT_ASSETS                                                           \
   std::cout << "-- ASSETS --\n";                                               \
-  std::cout << "\tTextures: " << Data::assets.textures.size() << "\n";         \
   std::cout << "\tSoundBuffs: " << Data::assets.soundBuffs.size() << "\n";     \
   std::cout << "\tSounds: " << Data::assets.sounds.size() << "\n";             \
   std::cout << "\tBgms: " << Data::assets.musics.size() << "\n"
@@ -104,14 +103,15 @@ void drawLine2(Vec2 v1, Vec2 v2, Color col1 = WHITE, Color col2 = WHITE);
 void drawTri(Vec2 v1, Vec2 v2, Vec2 v3, Color col = WHITE);
 void drawTri2(Vec2 v1, Vec2 v2, Vec2 v3, Color col1 = WHITE, Color col2 = WHITE,
               Color col3 = WHITE);
-void fillTri(Vec2 v1, Vec2 v2, Vec2 v3, Color col = WHITE);
-void fillTri2(Vec2 v1, Vec2 v2, Vec2 v3, Color col1 = WHITE, Color col2 = WHITE,
-              Color col3 = WHITE);
+void solidTri(Vec2 v1, Vec2 v2, Vec2 v3, Color col = WHITE);
+void solidTri2(Vec2 v1, Vec2 v2, Vec2 v3, Color col1 = WHITE,
+               Color col2 = WHITE, Color col3 = WHITE);
 void drawCircle(Vec2 v1, float rad, Color col = WHITE);
-void fillCircle(Vec2 v1, float rad, Color col = WHITE, Color outCol = WHITE);
+void solidCircle(const Vec2 &v1, const float &rad, const Color col = WHITE);
 void drawRect(Vec2 v1, Vec2 size, Color col = WHITE);
-void fillRect(Vec2 v1, Vec2 size, Color col1 = WHITE, Color outCol = WHITE);
+void solidRect(const Vec2 &v1, const Vec2 &size, const Color &col = WHITE);
 void drawSprite(Sprite &spr);
+void drawSpriteEx(Sprite spr, Color col);
 void drawSpriteAt(Vec2 pos, Sprite &spr);
 void drawPoint(Vec2 v1, Color col = WHITE);
 void drawPolygon(std::vector<Vec2> &points, Color col = WHITE,
@@ -135,11 +135,15 @@ Vec2 getTextSize(std::string text, size_t charSize);
 bool keyPressed(size_t k);
 bool keyReleased(size_t k);
 bool keyHeld(size_t k);
-void handleKeys();
+bool shiftKey();
+bool ctrlKey();
+bool altKey();
+bool sysKey();
 void hotkeys();
 char getCharHeld();
 char getCharPressed();
 char getCharReleased();
+int getCharEntered();
 
 // mouse functions --------------------------------------------------
 bool mousePressed(size_t btn);
@@ -153,9 +157,6 @@ void handleMouse();
 float mouseScroll();
 
 // assets functions --------------------------------------------------
-sf::Texture &loadTexture(std::string filename, std::string prefix = "res/gfx/",
-                         std::string suffix = ".png");
-sf::Texture &getTexture(std::string name);
 sf::SoundBuffer &loadSBuff(std::string filename,
                            std::string prefix = "res/sfx/",
                            std::string suffix = ".wav");

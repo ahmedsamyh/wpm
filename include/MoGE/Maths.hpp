@@ -22,5 +22,4 @@ int interpLini(const int from, const int to, const float t);
 
 float map(float value, float start1, float end1, float start2, float end2,
           bool withinBounds = true);
-
 } // namespace momo

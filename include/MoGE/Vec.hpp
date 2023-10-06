@@ -51,7 +51,8 @@ struct Vec2 {
 
   // Methods
   void clamp(Vec2 rangex, Vec2 rangey);
-
+  Vec2 floor() const;
+  Vec2 ceil() const;
   float mag() const;
   float mag2() const;
   float dist() const;
@@ -104,7 +105,8 @@ struct Vec3 {
 
   // Methods
   void clamp(Vec2 rangex, Vec2 rangey, Vec2 rangez);
-
+  Vec3 floor() const;
+  Vec3 ceil() const;
   float mag() const;
   float mag2() const;
   float dist() const;

@@ -41,7 +41,7 @@ struct Sprite : public sf::Drawable {
   void init(std::string _name, int _hframes = 1, int _vframes = 1);
   void update(float delta);
   void animate(float delta, size_t from = 0, int to = -1);
-  void fromSpriteSheet(std::string name, Vec2 p, Vec2 s);
+  void fromSpriteSheet(sf::Texture &tex, std::string name, Vec2 p, Vec2 s);
   void changeHFrame(size_t f);
   void changeVFrame(size_t f);
   void bind(Vec2 *b);

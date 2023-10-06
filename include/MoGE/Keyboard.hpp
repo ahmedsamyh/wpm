@@ -116,6 +116,11 @@ struct Key {
   bool pressed;
   bool held;
   bool released;
+  static bool shift;
+  static bool ctrl;
+  static bool alt;
+  static bool system;
+  static bool capslock;
   Key();
 
   void reset();
