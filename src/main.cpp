@@ -24,14 +24,14 @@ using namespace sh;
 
 // TODO: Maybe move the trim functions to stdcpp
 std::string& trim_right(std::string& str){
-  while (!str.empty() && std::isspace(str.back())){
+  while (!str.empty() && (std::isspace(str[str.size()-1]) || str[str.size()-1] == '\0')){
     str.pop_back();
   }
   return str;
 }
 
 std::string& trim_left(std::string& str){
-  while (!str.empty() && std::isspace(str[0])){
+  while (!str.empty() && (std::isspace(str[0]) || str[0] == '\0')){
     str = str.substr(1);
   }
   return str;
@@ -71,9 +71,6 @@ int main(int argc, char *argv[]) {
                const std::string &keyStr, const int charSize = -1) {
     d.draw_rect(pos, sf::Vector2f{width, KEY_SIZE}, TopLeft,
 		(d.k_held(key) ? sf::Color{255, 255, 255, 100} : sf::Color{0, 0, 0, 0}));
-	      // drawRect(pos, {width, KEY_SIZE});
-	      // d.draw_text(pos + Vec2(width / 2.f, KEY_SIZE / 2.f), keyStr,
-	      // (charSize == -1 ? KEY_SIZE / 2 : charSize));
   };
 
   auto draw_key = [&](Key key, sf::Vector2f pos, const std::string &key_str,
@@ -495,8 +492,6 @@ int main(int argc, char *argv[]) {
 
     ui.end();
 
-    // d.draw_text({0.f, 0.f}, text, TopLeft, DEFAULT_CHAR_SIZE, sf::Color(255, 255, 255, 100));
-
     sf::Vector2f text_pos{20.f, 20.f};
     size_t pos_i = 0;
     for (size_t i = 0; i < text.size(); ++i) {
@@ -505,7 +500,8 @@ int main(int argc, char *argv[]) {
       if (ch == '\r' || ch == '\n'){
 	text_pos.y += DEFAULT_CHAR_SIZE + 2.f;
 	pos_i = 0;
-	continue
+	VAR(text[i+1]);
+	continue;
       }
       
       sf::Color col = sf::Color::White;
@@ -521,13 +517,10 @@ int main(int argc, char *argv[]) {
       d.draw_text(text_pos + sf::Vector2f{(float(pos_i) * char_spacing) + float(pos_i) * DEFAULT_CHAR_SIZE/2.f, 0.f}, std::string{ch}, TopLeft, DEFAULT_CHAR_SIZE, col);
       pos_i++;
     }
-    
 
     // display
     d.display();
   }
-  // MAIN(MainScene);
-  // create("wpm", S_WIDTH, S_HEIGHT, WIDTH, HEIGHT);
-  // run();
+  
   return 0;
 }
